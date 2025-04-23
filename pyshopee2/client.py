@@ -161,9 +161,8 @@ class Client(object, metaclass=ClientMeta):
             return url + par
         return url
 
-    def _build_request(self, uri, method, body):
+    def _build_request(self, uri, method, body=None, files=None):
         method = method.upper()
-        headers = {'Content-Type': 'application/json'}
         timest = self._make_timestamp()
         uri = self.BASE_API_URL + uri
         url = self.host + uri
@@ -174,8 +173,14 @@ class Client(object, metaclass=ClientMeta):
             sign = self._api_sign(uri, timest)
             parameter = self._make_default_parameter(timest, sign)
 #        parameter = self.set_additional_parameter(parameter, sign, timest, self.access_token)
-        req = Request(method, url, headers=headers)
+        req = Request(method, url)
+        if files:
+            req.data = body
+            req.files = files
+
         if body:
+            req.headers = {'Content-Type': 'application/json'}
+
             if method in ["POST", "PUT", "PATH"]:
                 req.json = body
             else:
@@ -215,7 +220,7 @@ class Client(object, metaclass=ClientMeta):
         ''' defalut timeout value will be 10 seconds
         '''
         #parameter = self._make_default_parameter()
-        if body.get("timeout"):
+        if body.get("timeout", None):
             timeout = body.get("timeout")
             body.pop("timeout")
         else:
@@ -223,10 +228,8 @@ class Client(object, metaclass=ClientMeta):
 
         #if body is not None:
             #parameter.update(body)
-
-        req = self._build_request(uri, method, body)
-        print(req.params)
-        print(req.url)
+        files = body.pop("files", None)
+        req = self._build_request(uri, method, body, files)
         prepped = req.prepare()
 
         s = Session()

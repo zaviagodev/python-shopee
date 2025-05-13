@@ -276,11 +276,16 @@ class Client(object, metaclass=ClientMeta):
         self.shop_id = int(code[1].replace('shop_id=', ''))
         return self.code, self.shop_id
 
+
     def get_token(self):
         body = {'code': self.code, 'shop_id': int(self.shop_id), 'partner_id': int(self.partner_id)}
         url = self.auth_url('/api/v2/auth/token/get')[1]
         headers = {'Content-Type': 'application/json'}
         resp = requests.post(url, json=body, headers=headers).json()
+        
+        self.access_token = resp.get("access_token")
+        self.refresh_token = resp.get("refresh_token")
+        self.timeout = resp.get("expire_in")
 
         return resp
 
@@ -289,5 +294,9 @@ class Client(object, metaclass=ClientMeta):
         url = self.auth_url('/api/v2/auth/access_token/get')[1]
         headers = {'Content-Type': 'application/json'}
         resp = requests.post(url, json=body, headers=headers).json()
-    
+
+        self.access_token = resp.get("access_token")
+        self.refresh_token = resp.get("refresh_token")
+        self.timeout = resp.get("expire_in")
+
         return resp
